@@ -154,7 +154,10 @@ download_new_img () {
         msg "turn WAN ON: `powerd_test -s | grep Remaining | awk '{print $6}'` s in '`powerd_test -s | grep Power | awk '{print $3 $4}'`'"
         lipc-set-prop com.lab126.wan startWan 1
     fi
-    
+    if [ $USE_WIFI == "YES" ]; then
+        /usr/bin/lipc-set-prop com.lab126.wifid enable 1
+    fi
+
     # wait befor continue evaluating the connection
     sleep $PRE_SLEEP
 
@@ -232,6 +235,9 @@ download_new_img () {
     if [ $USE_WAN == "YES" ]; then
         lipc-set-prop com.lab126.wan stopWan 1
         msg "WAN OFF: `powerd_test -s | grep Remaining | awk '{print $6}'` s in '`powerd_test -s | grep Power | awk '{print $3 $4}'`'" # >> /mnt/us/llb/wakeup.log
+    fi
+    if [ $USE_WIFI == "YES" ]; then
+        /usr/bin/lipc-set-prop com.lab126.wifid enable 0
     fi
     CONNECTED=0
 
@@ -319,11 +325,32 @@ display_refresh () {
 # -------------------------------
 # START: SECOND BLOCK: VARIABELS
 
+# VARIABLES TO ADJUST ....
+# (definitely modify these for your use-case)
+
 # Send log via email?
 USE_SMTP="NO"
+# use NTP?
+USE_NTP="NO"
+# use WAN?
+USE_WAN="NO"
+# use wifi?
+USE_WIFI="YES"
+
+# image file and folder
+FOLDER="/mnt/us/infokindle/recent"
+FN_TEMP=$FOLDER/llb_temp.png
+FN=$FOLDER/llb.png
+
+LOG_FILE="/mnt/us/infokindle/disp_llb.log"
+IMG_URL="http://www.url.to/your/image.png"
 
 # Define ACTIONs
 ACTION_TIME="08:15 17:15"
+
+
+# ADVANCED VARIABLES TO ADJUST ....
+# (you shouldn't need to modify these unless you run into issues)
 
 # dont sleep 4 min before action
 STAY_AWAKE="240"
@@ -339,29 +366,21 @@ WAKEUP_MINIMAL=60
 LATEST_WAKEUP_SET=0
 
 # WAN
-USE_WAN="NO"
 NETWORK_TIMEOUT=60
-TEST_DOMAIN="195.186.152.33"
+#TEST_DOMAIN="195.186.152.33" #unused
 # time to wait after switching WAN on
 #+wait this time again, after detecting WAN connecting
 PRE_SLEEP=20;
 
-USE_NTP="NO"
+
+
 NTP_SERVER="1.ch.pool.ntp.org"
-IMG_URL="http://www.url.to/your/image.png"
 
 mail_first_line="Subject:Log-file avalanche Kindle"
 MAIL_USER="your_mail_provider_username"
 MAIL_PW="your_mail_provide_password"
 MAIL_RECIPIENT="your_mail_to_receive_log@provide.ch"
 MAIL_ADD="your_kindle_mail_account@gmx.ch"
-
-# image file and folder
-FOLDER="/mnt/us/cron_script/recent"
-FN_TEMP=$FOLDER/llb_temp.png
-FN=$FOLDER/llb.png
-
-LOG_FILE="/mnt/us/cron_script/disp_llb.log"
 
 
 # initialize empty Log-File
