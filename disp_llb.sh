@@ -16,16 +16,15 @@
 # -------------------------------
 # START: FIRST BLOCK: FUNCTIONS
 
-send_log () {
-    if [ "SMTP_LOG" == "YES" ]; then
-        /mnt/us/busybox_test/busybox-armv7l sendmail -H "exec openssl s_client -quiet -connect mail.gmx.net:25 -tls1 -starttls smtp" -f "$MAIL_ADD" -au"$MAIL_USER" -ap"$MAIL_PW" $MAIL_RECIPIENT -v < $LOG_FILE
-        if [ $? ]; then
-            echo $mail_first_line > $LOG_FILE
-            msg "Log file send! emptied log!"
-        else
-            msg "could not send log file ..."
-        fi
+send_log_smtp () {
+    /mnt/us/busybox_test/busybox-armv7l sendmail -H "exec openssl s_client -quiet -connect mail.gmx.net:25 -tls1 -starttls smtp" -f "$MAIL_ADD" -au"$MAIL_USER" -ap"$MAIL_PW" $MAIL_RECIPIENT -v < $LOG_FILE
+    if [ $? ]; then
+        echo $mail_first_line > $LOG_FILE
+        msg "Log file send! emptied log!"
+    else
+        msg "could not send log file ..."
     fi
+    
 }
 
 wait_for_ss () {
@@ -149,10 +148,13 @@ calc_wakeup () {
 }
 
 download_llb () {
-    # turn on WAN
-    msg "turn WAN ON: `powerd_test -s | grep Remaining | awk '{print $6}'` s in '`powerd_test -s | grep Power | awk '{print $3 $4}'`'"
-    lipc-set-prop com.lab126.wan startWan 1
 
+    # turn on WAN
+    if [ $USE_WAN == "YES" ]; then
+        msg "turn WAN ON: `powerd_test -s | grep Remaining | awk '{print $6}'` s in '`powerd_test -s | grep Power | awk '{print $3 $4}'`'"
+        lipc-set-prop com.lab126.wan startWan 1
+    fi
+    
     # wait befor continue evaluating the connection
     sleep $PRE_SLEEP
 
@@ -205,27 +207,34 @@ download_llb () {
         fi
         DOWNLOAD_IMG="NO"
 
-        # sync the time
-        ntpdate $NTP_SERVER
-        if [ $? -ne 0 ]; then
-            msg "Could not receive current time!"
-         else
-            msg "Time sync successfull"
-            hwclock -w
+        if [ $USE_NTP == "YES" ]; then
+            # sync the time
+            ntpdate $NTP_SERVER
+            if [ $? -ne 0 ]; then
+                msg "Could not receive current time!"
+             else
+                msg "Time sync successfull"
+                hwclock -w
+            fi
         fi
-
+        
         # send log
-        send_log
+        if [ $USE_SMTP == "YES" ]; then
+            send_log_smtp
+        fi
+            
      else
         msg "Failed to connect, trigger fail_mode"
         DL_FAILED="YES"
         set_retries
     fi
     # Stop WAN
-    lipc-set-prop com.lab126.wan stopWan 1
+    if [ $USE_WAN == "YES" ]; then
+        lipc-set-prop com.lab126.wan stopWan 1
+        msg "WAN OFF: `powerd_test -s | grep Remaining | awk '{print $6}'` s in '`powerd_test -s | grep Power | awk '{print $3 $4}'`'" # >> /mnt/us/llb/wakeup.log
+    fi
     CONNECTED=0
 
-    msg "WAN OFF: `powerd_test -s | grep Remaining | awk '{print $6}'` s in '`powerd_test -s | grep Power | awk '{print $3 $4}'`'" # >> /mnt/us/llb/wakeup.log
 }
 
 set_retries () {
@@ -311,7 +320,7 @@ display_refresh () {
 # START: SECOND BLOCK: VARIABELS
 
 # Send log via email?
-SMTP_LOG="NO"
+USE_SMTP="NO"
 
 # Define ACTIONs
 ACTION_TIME="08:15 17:15"
@@ -330,11 +339,14 @@ WAKEUP_MINIMAL=60
 LATEST_WAKEUP_SET=0
 
 # WAN
+USE_WAN="NO"
 NETWORK_TIMEOUT=60
 TEST_DOMAIN="195.186.152.33"
 # time to wait after switching WAN on
 #+wait this time again, after detecting WAN connecting
 PRE_SLEEP=20;
+
+USE_NTP="NO"
 NTP_SERVER="1.ch.pool.ntp.org"
 IMG_URL="http://www.url.to/your/image.png"
 
