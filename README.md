@@ -1,3 +1,11 @@
+# infokindle
+Changing a Kindle into a Kindle information display (that refreshes the screen on a defined scheduled).
+
+
+
+
+This project is extended from the avakindle project.  I've generalized.  I'm attaching the original readme below:
+
 # avakindle
 Remote public warning display based on amazon kindle DX with OS version 2.5.8
 
