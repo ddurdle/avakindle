@@ -147,7 +147,7 @@ calc_wakeup () {
     WAKE_TIME=$WAKE_TIME_set
 }
 
-download_llb () {
+download_new_img () {
 
     # turn on WAN
     if [ $USE_WAN == "YES" ]; then
@@ -421,7 +421,7 @@ while [ 1 -eq 1 ]; do
         # display refresh screen
         display_refresh
         #returns DL_FAILED="NO" if succesfull download
-        download_llb
+        download_new_img
         # switch back to screensave
         powerd_test -p
         # display most recent image, or if failed display the last image...
