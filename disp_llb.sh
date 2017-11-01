@@ -17,12 +17,14 @@
 # START: FIRST BLOCK: FUNCTIONS
 
 send_log () {
-    /mnt/us/busybox_test/busybox-armv7l sendmail -H "exec openssl s_client -quiet -connect mail.gmx.net:25 -tls1 -starttls smtp" -f "$MAIL_ADD" -au"$MAIL_USER" -ap"$MAIL_PW" $MAIL_RECIPIENT -v < $LOG_FILE
-    if [ $? ]; then
-        echo $mail_first_line > $LOG_FILE
-        msg "Log file send! emptied log!"
-    else
-        msg "could not send log file ..."
+    if [ "SMTP_LOG" == "YES" ]; then
+        /mnt/us/busybox_test/busybox-armv7l sendmail -H "exec openssl s_client -quiet -connect mail.gmx.net:25 -tls1 -starttls smtp" -f "$MAIL_ADD" -au"$MAIL_USER" -ap"$MAIL_PW" $MAIL_RECIPIENT -v < $LOG_FILE
+        if [ $? ]; then
+            echo $mail_first_line > $LOG_FILE
+            msg "Log file send! emptied log!"
+        else
+            msg "could not send log file ..."
+        fi
     fi
 }
 
@@ -307,6 +309,9 @@ display_refresh () {
 
 # -------------------------------
 # START: SECOND BLOCK: VARIABELS
+
+# Send log via email?
+SMTP_LOG="NO"
 
 # Define ACTIONs
 ACTION_TIME="08:15 17:15"
