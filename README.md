@@ -1,10 +1,16 @@
 # infokindle
 Changing a Kindle into a Kindle information display (that refreshes the screen on a defined scheduled).
 
+## CHANGES
+#### added USE_SMTP: toggle on/off sending log via SMTP
+#### added USE_WAN: toggle on/off using a WAN connection
+#### added USE_NTP: toggle on/off updating time with NTP
+#### renamed download_lib to download_new_img: renamed with a more appropriate name
 
 
 
-This project is extended from the avakindle project.  I've generalized.  I'm attaching the original readme below:
+
+This project is extended from the avakindle project.  GREAT KUDOS GOES OUT TO THE ORIGINAL AUTHOR.  I've generalized his code for a slightly different purpose.  I'm attaching the original readme below:
 
 # avakindle
 Remote public warning display based on amazon kindle DX with OS version 2.5.8
