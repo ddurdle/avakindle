@@ -296,18 +296,21 @@ display_image () {
     # display most recent image
     msg "Display image!"
     eips -c
-    sleep 1
-    eips -f -g $1
-    #eips -c
-    sleep 1
-    eips -f -g $1
-    #eips -c
-    sleep 1
-    eips -f -g $1
-    #eips -c
-    sleep 1
-    eips -f -g $1
-    #eips -c
+    
+    if [ $USE_COMPLEX_REFRESH == "YES" ]; then
+        sleep 1
+        eips -f -g $1
+        #eips -c
+        sleep 1
+        eips -f -g $1
+        #eips -c
+        sleep 1
+        eips -f -g $1
+        #eips -c
+        sleep 1
+        eips -f -g $1
+        #eips -c
+    fi
     sleep 1
     eips -f -g $1
 }
@@ -336,14 +339,16 @@ USE_NTP="NO"
 USE_WAN="NO"
 # use wifi?
 USE_WIFI="YES"
+# thorougly refresh screen during update?
+USE_COMPLEX_REFRESH="NO"
 
 # image file and folder
 FOLDER="/mnt/us/infokindle/recent"
-FN_TEMP=$FOLDER/llb_temp.png
-FN=$FOLDER/llb.png
+FN_TEMP=$FOLDER/weather-script-output_s.png
+FN=$FOLDER/weather-script-output.png
 
 LOG_FILE="/mnt/us/infokindle/disp_llb.log"
-IMG_URL="http://www.url.to/your/image.png"
+IMG_URL="http://104.193.224.179/kindle/weather-script-output_s.png"
 
 # Define ACTIONs
 ACTION_TIME="08:15 17:15"
