@@ -397,18 +397,19 @@ touch $LOG_FILE
 echo $mail_first_line > $LOG_FILE
 
 # initialize the WAN device
-wan_dev=1
-while [ $wan_dev -eq 1 ]; do
-    wancontrol wanon
-    wan_dev=$?
-    if [ $wan_dev -eq 1 ]; then
-        msg "wancontrol wanon: failed, check in 20s again"
-        sleep 10
-        wancontrol wanoff
-        sleep 10
-    fi
-done
-
+if [ $USE_WAN == "YES" ]; then
+    wan_dev=1
+    while [ $wan_dev -eq 1 ]; do
+        wancontrol wanon
+        wan_dev=$?
+        if [ $wan_dev -eq 1 ]; then
+            msg "wancontrol wanon: failed, check in 20s again"
+            sleep 10
+            wancontrol wanoff
+            sleep 10
+        fi
+    done
+fi
 # Set internal start values:
 # load the image in first round
 DOWNLOAD_IMG="YES"
