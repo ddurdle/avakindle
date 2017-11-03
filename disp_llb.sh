@@ -163,28 +163,32 @@ download_new_img () {
 
     TIMER=${NETWORK_TIMEOUT}     # number of seconds to attempt a connection
     CONNECTED=0                  # whether we are currently connected
-    while [ 0 -eq $CONNECTED ]; do
-        # test whether we can ping outside
-        ifconfig | grep ppp0 && CONNECTED=1
-        #/bin/ping -c 1 -I ppp0 $TEST_DOMAIN && CONNECTED=1
+    if [ $USE_WAN == "YES" ]; then
+        while [ 0 -eq $CONNECTED ]; do
+            # test whether we can ping outside
+            ifconfig | grep ppp0 && CONNECTED=1
+            #/bin/ping -c 1 -I ppp0 $TEST_DOMAIN && CONNECTED=1
 
-        # if we can't, checkout timeout or s leep for 1s
-        if [ 0 -eq $CONNECTED ]; then
-            TIMER=$(($TIMER-1))
-            if [ 0 -eq $TIMER ]; then
-                msg "No internet connection after ${NETWORK_TIMEOUT} seconds, aborting."
-                break
-            else
-                sleep 1
+            # if we can't, checkout timeout or s leep for 1s
+            if [ 0 -eq $CONNECTED ]; then
+                TIMER=$(($TIMER-1))
+                if [ 0 -eq $TIMER ]; then
+                    msg "No internet connection after ${NETWORK_TIMEOUT} seconds, aborting."
+                    break
+                else
+                    sleep 1
+                fi
             fi
-        fi
-    done
-
+        done
+    else
+        CONNECTED=1
+    fi
+    
     sleep $PRE_SLEEP
 
     # download
     if [ 1 -eq $CONNECTED ]; then
-        msg "WAN connected, start download ..."
+        msg "connected, start download ..."
         dnow=`date '+%Y-%m-%d-%H-%M-%S'`
 
         if [ -f FN_TEMP ]; then
@@ -343,7 +347,7 @@ USE_WIFI="YES"
 USE_COMPLEX_REFRESH="NO"
 
 # image file and folder
-FOLDER="/mnt/us/infokindle/recent"
+FOLDER="/mnt/us/infokindle"
 FN_TEMP=$FOLDER/weather-script-output_s.png
 FN=$FOLDER/weather-script-output.png
 
