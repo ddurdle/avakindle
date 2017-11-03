@@ -156,6 +156,7 @@ download_new_img () {
     fi
     if [ $USE_WIFI == "YES" ]; then
         /usr/bin/lipc-set-prop com.lab126.wifid enable 1
+        sleep 5
         /bin/ip route add default via  192.168.1.1
     fi
 
