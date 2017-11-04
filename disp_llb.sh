@@ -1,9 +1,5 @@
 #!/bin/sh
 
-###########################
-# TODO: write a state check function! using powerd_test -p without state
-#       is a bad idea!
-###########################
 
 ###########################
 # TODO: read mail user from external file, add this file to .gitignore
@@ -165,7 +161,7 @@ download_new_img () {
     if [ $USE_WIFI == "YES" ]; then
         /usr/bin/lipc-set-prop com.lab126.wifid enable 1
         sleep 5
-        /bin/ip route add default via  192.168.1.1
+        #/bin/ip route add default via  192.168.1.1
     fi
 
     # wait befor continue evaluating the connection
@@ -296,12 +292,12 @@ write_wakeup () {
     else
         DOWNLOAD_IMG="YES"
         # we are in ready to suspend, hit it once to get to active
-        powerd_test -p
-        msg "Oh, we will download soon !"
-        display_refresh
-        sleep 10
+        #powerd_test -p
+        #msg "Oh, we will download soon !"
+        #display_refresh
+        #sleep 10
         # hit a second time to go screensaver
-        powerd_test -p
+        #powerd_test -p
         display_refresh
     fi
 }
@@ -463,15 +459,15 @@ while [ 1 -eq 1 ]; do
         # Download will be performed in 'active'-mode:
         # we need to wait for screen save: never simulate the power
         #+button in 'active' and bring the kindle into never ending sleep
-        wait_for_ss
+        #wait_for_ss
         # turn into active:
-        powerd_test -p
+        #powerd_test -p
         # display refresh screen
-        display_refresh
+        #display_refresh
         #returns DL_FAILED="NO" if succesfull download
         download_new_img
         # switch back to screensave
-        powerd_test -p
+        #powerd_test -p
         # display most recent image, or if failed display the last image...
         display_image $FN
     fi
