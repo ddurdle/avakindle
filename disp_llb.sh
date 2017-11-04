@@ -81,7 +81,7 @@ calc_wakeup () {
     # initialize WAKE_TIME_set (internal of output WAKE_TIME)
     WAKE_TIME_set=$WAKEUP_CHECK_DEFAULT
 
-    if [ "$DL_FAILED" == "YES" ]; then
+    if [ USE_FAILMODE == "YES" && "$DL_FAILED" == "YES" ]; then
             # We could not load image last time - FAIL mode
             msg_str_d="Fail Mode, retry in $WAKEUP_CHECK_DEFAULT_FAIL s."
             CURR_ACTION="Fail mode"
@@ -90,56 +90,64 @@ calc_wakeup () {
             DEFER_STAY_AWAKE="NO"
             # SHOULD HERE DONWLLOAUD _IMG set to YES ?????
     else
-        # see if there is an action coming close, if so, manipulate WAKE_TIME_set
+    
+        if [ $USE_SCHEDULE == "YES" ]; then
+            # see if there is an action coming close, if so, manipulate WAKE_TIME_set
 
-        # get closest action
-        WAKE_TIME_set=$WAKEUP_CHECK_DEFAULT
-        CURR_ACTION="Default wakeup"
-        for ACTION in `echo $ACTION_TIME | awk '{ s = ""; for (i = 1; i <= NF; i++) print $i }'`; do
-            # convert hh:ss into seconds since 00:00
-            DESIRED=`echo $ACTION | sed 's/:/ /g' | awk '{print ($1*3600)+($2*60)}'`
-            DIFF_TIME_V=`expr $DESIRED - $D_TIME`;
-            # get absolut value of DIFF_TIME
-            #DIFF_TIME=`echo ${DIFF_TIME_V#-}`
-            # negative if past, positive in secons to the event...
-            #DIFF_TIME=`expr $DIFF_TIME_V \* -1`;
-            DIFF_TIME=$DIFF_TIME_V
+            # get closest action
+            WAKE_TIME_set=$WAKEUP_CHECK_DEFAULT
+            CURR_ACTION="Default wakeup"
+            for ACTION in `echo $ACTION_TIME | awk '{ s = ""; for (i = 1; i <= NF; i++) print $i }'`; do
+                # convert hh:ss into seconds since 00:00
+                DESIRED=`echo $ACTION | sed 's/:/ /g' | awk '{print ($1*3600)+($2*60)}'`
+                DIFF_TIME_V=`expr $DESIRED - $D_TIME`;
+                # get absolut value of DIFF_TIME
+                #DIFF_TIME=`echo ${DIFF_TIME_V#-}`
+                # negative if past, positive in secons to the event...
+                #DIFF_TIME=`expr $DIFF_TIME_V \* -1`;
+                DIFF_TIME=$DIFF_TIME_V
 
-            if [ $DIFF_TIME -lt $WAKE_TIME_set ]; then
-                if [ $DIFF_TIME -ge 120 ]; then
-                    # we remove some time, to not wake up to late.
-                    WAKE_TIME_set=`expr $DIFF_TIME - 120`
-                    CURR_ACTION=$ACTION
-                elif [ $DIFF_TIME -gt -120 ] && [ $DIFF_TIME -lt 120 ]; then
-                    # ok, download!
-                    WAKE_TIME_set=0
-                    CURR_ACTION=$ACTION
+                if [ $DIFF_TIME -lt $WAKE_TIME_set ]; then
+                    if [ $DIFF_TIME -ge 120 ]; then
+                        # we remove some time, to not wake up to late.
+                        WAKE_TIME_set=`expr $DIFF_TIME - 120`
+                        CURR_ACTION=$ACTION
+                    elif [ $DIFF_TIME -gt -120 ] && [ $DIFF_TIME -lt 120 ]; then
+                        # ok, download!
+                        WAKE_TIME_set=0
+                        CURR_ACTION=$ACTION
+                    else
+                        # action past
+                        msg "$ACTION: $DIFF_TIME s since the action - sleep again!"
+                    fi
                 else
-                    # action past
-                    msg "$ACTION: $DIFF_TIME s since the action - sleep again!"
+                    msg "$ACTION: $DIFF_TIME is larger than $WAKE_TIME_set - sleep again!"
                 fi
+            done
+            # charaterize action
+            if [ $WAKE_TIME_set -lt $WAKEUP_CHECK_DEFAULT ]; then
+                # We are really close to the event, trigger download.
+                if [ $WAKE_TIME_set  -lt $STAY_AWAKE ] && [ "$DEFER_STAY_AWAKE" == "NO" ]; then
+                    DOWNLOAD_IMG="YES"
+                    msg_str_d="only $WAKE_TIME_set s away from ' $CURR_ACTION ' action, trigger Download."
+                    DEFER_STAY_AWAKE="YES"
+                # We are close, but its worse going into sleep again
+                else
+                    msg_str_d="$WAKE_TIME_set s from ' $CURR_ACTION ' away, will sleep again"
+                    DOWNLOAD_IMG="NO"
+                    DEFER_STAY_AWAKE="NO"
+                fi
+            # We are hours away, we will sleep for WAKEUP_CHECK_DEFAULT
             else
-                msg "$ACTION: $DIFF_TIME is larger than $WAKE_TIME_set - sleep again!"
-            fi
-        done
-        # charaterize action
-        if [ $WAKE_TIME_set -lt $WAKEUP_CHECK_DEFAULT ]; then
-            # We are really close to the event, trigger download.
-            if [ $WAKE_TIME_set  -lt $STAY_AWAKE ] && [ "$DEFER_STAY_AWAKE" == "NO" ]; then
-                DOWNLOAD_IMG="YES"
-                msg_str_d="only $WAKE_TIME_set s away from ' $CURR_ACTION ' action, trigger Download."
-                DEFER_STAY_AWAKE="YES"
-            # We are close, but its worse going into sleep again
-            else
-                msg_str_d="$WAKE_TIME_set s from ' $CURR_ACTION ' away, will sleep again"
+                msg_str_d="More than $WAKEUP_CHECK_DEFAULT s from next action away, will sleep again"
                 DOWNLOAD_IMG="NO"
                 DEFER_STAY_AWAKE="NO"
             fi
-        # We are hours away, we will sleep for WAKEUP_CHECK_DEFAULT
         else
-            msg_str_d="More than $WAKEUP_CHECK_DEFAULT s from next action away, will sleep again"
-            DOWNLOAD_IMG="NO"
-            DEFER_STAY_AWAKE="NO"
+                msg_str_d="using no schedule, use $WAKEUP_CHECK_DEFAULT s from next action away, will sleep again"
+                #if $D_TIME -lt $LAST_WAKEUP
+                DOWNLOAD_IMG="YES"
+                DEFER_STAY_AWAKE="NO"
         fi
     fi
     msg "$msg_str_d"
@@ -345,8 +353,17 @@ USE_NTP="NO"
 USE_WAN="NO"
 # use wifi?
 USE_WIFI="YES"
-# thorougly refresh screen during update?
+# thoroughly refresh screen during update?
 USE_COMPLEX_REFRESH="NO"
+# use a predefined schedule to fetch from, otherwise
+#  fetch whenever the kindle wakes up, if > minimum threshold
+USE_SCHEDULE="NO"
+# minimum sleep threshold before fetching more data (in seconds)
+#  (incase the kindle wakes up before next scheduled wakeup)
+MINIMUM_FETCH_TIME=600
+# allow for fail mode or ignore fetch failures
+USE_FAILMODE="NO"
+LAST_WAKEUP=0
 
 # image file and folder
 FOLDER="/mnt/us/infokindle"
